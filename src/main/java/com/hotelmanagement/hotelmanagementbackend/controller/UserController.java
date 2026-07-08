@@ -1,17 +1,21 @@
 package com.hotelmanagement.hotelmanagementbackend.controller;
 
 import com.hotelmanagement.hotelmanagementbackend.model.User;
+import com.hotelmanagement.hotelmanagementbackend.JwtUtil;
 import com.hotelmanagement.hotelmanagementbackend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.HashMap;
 
 import java.util.Map;
 import java.util.Optional;
-
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
+	
+	@Autowired
+	private JwtUtil jwtUtil;
 
     @Autowired
     private UserService userService;
@@ -25,19 +29,22 @@ public class UserController {
 
     // POST: Login
     @PostMapping("/login")
-    public ResponseEntity<String> loginUser(@RequestBody Map<String, String> loginRequest) {
+    public ResponseEntity<?> loginUser(@RequestBody Map<String, String> loginRequest) {
         String email = loginRequest.get("email");
         String password = loginRequest.get("password");
 
         boolean isValid = userService.loginUser(email, password);
 
         if (isValid) {
-            return ResponseEntity.ok("Login successful");
+            String token = jwtUtil.generateToken(email);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Login successful");
+            response.put("token", token);
+            return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.status(401).body("Invalid email or password");
         }
     }
-
     // GET: Get user by id
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable String id) {
